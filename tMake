@@ -1,0 +1,4 @@
+all: threadSolver
+
+threadSolver: threadSolver.cpp
+	g++  -pthread -o threadSolver threadSolver.cpp -larmadillo -lblas -llapack

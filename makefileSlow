@@ -1,0 +1,24 @@
+CC=gcc
+CFLAGS=-DNDEBUG -O3 
+
+INCLUDES=-I${CULA_INC_PATH} -I${CUDA_INC_PATH}
+LIBPATH64=-L${CULA_LIB_PATH_64} -L${CUDA_LIB_PATH_64}
+
+LIBS= -lcula_lapack_basic -lcublas -lcudart -liomp5 -lm
+
+all: run
+
+run: cudaSolver
+	./cudaSolver
+
+slowCudaSolver: slowExpcuda.o slowCudaSolver.o
+	$(CC) -m64 -o slowCudaSolver slowExpcuda.o slowCudaSolver.o $(LIBPATH64) $(LIBS)
+
+slowExpcuda.o: oldExpcuda.c
+	$(CC) -c -m64 -o slowExpcuda.o oldExpcuda.c $(CFLAGS) $(INCLUDES)
+
+slowCudaSolver.o: oldCudaSolver.c
+	$(CC) -c -m64 -o slowCudaSolver.o oldCudaSolver.c $(CFLAGS) $(INCLUDES)
+
+clean:
+	rm -rf *o slowCudaSolver

@@ -1,0 +1,5 @@
+all: solver
+	./solver 10
+
+solver: solver.cpp
+	g++ -o solver solver.cpp -larmadillo -lblas -llapack

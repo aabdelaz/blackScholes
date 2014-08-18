@@ -1,0 +1,16 @@
+CC=gcc
+CFLAGS=-DNDEBUG -O3
+
+INCLUDES=-I${CULA_INC_PATH} -I${CUDA_INC_PATH}
+LIBPATH64=-L${CULA_LIB_PATH_64} -L${CUDA_LIB_PATH_64}
+
+LIBS=-lcula_lapack_basic -lcublas -lcudart -liomp5 -lm
+
+all: mult
+	./mult
+
+mult: expcuda.c
+	${CC} -m64 -o mult expcuda.c $(CFLAGS) $(INCLUDES) $(LIBPATH64) $(LIBS)
+
+clean:
+	rm -f mult
