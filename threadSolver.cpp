@@ -23,15 +23,6 @@ pthread_barrier_t barr;
 
 fmat A, V, H, U, xi;
 
-/*typedef struct Params {
-    int id;
-    fmat &A;
-    fmat &V;
-    fmat &H;
-    fmat &U;
-    fvec &xi;
-} Params;*/
-
 // defined in eq 2.4, p. 3
 // never gets past the if statement in our examples 
 float pi_epsilon(const float &y, const float &ep) {
@@ -52,7 +43,6 @@ float pi_epsilon(const float &y, const float &ep) {
     float y8 = y4*y4;
 
     return c0 + c1*y + c2*y2 + c4*y4 + c6*y6 + c8*y8; 
-
 }
 
 // volatility; given t, returns a vector containing the volatility at that time

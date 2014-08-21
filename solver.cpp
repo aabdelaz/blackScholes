@@ -66,10 +66,10 @@ float rational_arnoldi(const fmat &A, const fmat &v, fmat &V, fmat &H, const fma
 
        H(j + 1, j) = norm(x);
        V.col(j + 1) = x/H(j + 1, j);
-       cout << "j is " << j << '\n';
-       cout << "x is \n" << x << '\n';
-       cout << "V is \n" << V << '\n';
-       cout << "H is \n" << H << '\n';
+       //cout << "j is " << j << '\n';
+       //cout << "x is \n" << x << '\n';
+       //cout << "V is \n" << V << '\n';
+       //cout << "H is \n" << H << '\n';
     }
 
     fmat y = V*U.col(m - 1);
@@ -168,13 +168,22 @@ fmat krylov(int m, float l, const fmat &A, const fmat &v, int expo) {
     fmat V(A.n_rows, m, fill::zeros);
     fmat H(m, m, fill::zeros);
     fvec xi(m);
-    xi.fill((float)-1.0*m/sqrt(2));
-    fmat U(m, m, fill::zeros);
-
+    //xi.fill((float)-1.0*m/sqrt(2));
+    xi.fill(1e15);
+    //fmat U(m, m, fill::zeros);
+    fmat U(m, m, fill::eye);
     // one entry per column
-    for (int j = 0; j < m; j++) {
+    /*for (int j = 0; j < m; j++) {
         U(j/STEP_WIDTH*STEP_WIDTH, j) = 1.;
+    }*/
+    
+    /*for (int j = 0; j < STEP_WIDTH; j++) {
+        U(j, j) = 1.;
     }
+
+    /*for (int j = STEP_WIDTH; j < m; j++) {
+        U(j - STEP_WIDTH, j) = 1.;
+    }*/
 
     float beta = /*arnoldi*/ rational_arnoldi(A, v, V, H, U, xi);
     fmat e_0(m, 1, fill::zeros);
@@ -207,7 +216,7 @@ int main(int argc, char *argv[]) {
     // we'll hardcode those here
 
     // k, confusingly named, is the dimensions to be projected upon
-    int k = 5; //50;
+    int k = 50;
     float K = 25;
     float S_max = 4*K;
     float N = atoi(argv[1]);
