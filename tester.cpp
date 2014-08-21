@@ -1,22 +1,16 @@
-#define MAX(a,b) ({ typeof (a) _a = (a); \
-                   typeof (b) _b = (b); \
-                   _a > _b ? _a : _b; })
-
-#define STEP_WIDTH 8    
-
-#define DOPRINT
-
 #include <armadillo>
 #include <cmath>
-#include <fstream>
-#include <complex> 
-#include <ctime>
+
+#define N 200
+#define M 200
+#define NUM_K_VALS 5
+
+#define MAX(a,b) ({ typeof (a) _a = (a); \
+                   typeof (b) _b = (b); \
+                   _a > _b ? _a : _b; }) 
 
 using namespace std;
 using namespace arma;
-
-ofstream imaginary;
-ofstream absval;
 
 // defined in eq 2.4, p. 3
 // never gets past the if statement in our examples 
@@ -47,41 +41,6 @@ inline float sigma(const float &t, const float &x) {
     return 0.2 + 0.2*(1 - t)*((x/25 - 1.2)*(x/25 - 1.2)/((x/25)*(x/25) + 1.44));
 } 
 
-
-// for some reason I'm getting nans in H 
-/*float rational_arnoldi(const fmat &A, const fmat &v, fmat &V, fmat &H, const fmat &U, const fvec &xi) {
-    int m = V.n_cols;
-    float beta = norm(v);
-    V.col(0) = v/beta;
- 
-    fmat I(A.n_rows, A.n_cols, fill::eye);
-
-    for (int j = 0; j < m - 1; j++) {
-        fmat y = V.cols(0, j)*U.col(j).rows(0, j);
-        fmat x = solve(I - A/xi(j), A*y);
-        for (int i = 0; i <= j; i++) {
-            H(i, j) = dot(V.col(i), x);
-            x -= H(i, j)*V.col(i);
-        }
-
-       H(j + 1, j) = norm(x);
-       V.col(j + 1) = x/H(j + 1, j);
-       //cout << "j is " << j << '\n';
-       //cout << "x is \n" << x << '\n';
-       //cout << "V is \n" << V << '\n';
-       //cout << "H is \n" << H << '\n';
-    }
-
-    fmat y = V*U.col(m - 1);
-
-    fmat x = solve(I - A/xi(m - 1), A*y);
-    for (int i = 0; i <= m - 1; i++) {
-        H(i, m - 1) = dot(V.col(i), x);
-        x -= H(i, m - 1)*V.col(i);
-    }
-    
-    return beta;
-}*/
 
 // returns beta; fills in H and V
 float arnoldi(const fmat &A, const fmat &v, fmat &V, fmat &H) {
@@ -167,25 +126,8 @@ fmat phi(fmat &A) {
 fmat krylov(int m, float l, const fmat &A, const fmat &v, int expo) {
     fmat V(A.n_rows, m, fill::zeros);
     fmat H(m, m, fill::zeros);
-    //fvec xi(m);
-    //xi.fill((float)-1.0*m/sqrt(2));
-    //xi.fill(1e15);
-    //fmat U(m, m, fill::zeros);
-    //fmat U(m, m, fill::eye);
-    // one entry per column
-    /*for (int j = 0; j < m; j++) {
-        U(j/STEP_WIDTH*STEP_WIDTH, j) = 1.;
-    }*/
-    
-    /*for (int j = 0; j < STEP_WIDTH; j++) {
-        U(j, j) = 1.;
-    }
 
-    /*for (int j = STEP_WIDTH; j < m; j++) {
-        U(j - STEP_WIDTH, j) = 1.;
-    }*/
-
-    float beta =/*rational_arnoldi*/ arnoldi(A, v, V, H); //, U, xi);
+    float beta = arnoldi(A, v, V, H);
     fmat e_0(m, 1, fill::zeros);
     e_0(0) = 1;
     fmat w;
@@ -199,34 +141,12 @@ fmat krylov(int m, float l, const fmat &A, const fmat &v, int expo) {
     return w;
 }
 
-    template <typename T>
-string itoa(T Number)
-{
-    stringstream ss;
-    ss << Number;
-    return ss.str();
-}
-
-int main(int argc, char *argv[]) {
-
+fvec run_solver(int k) {
     // so let's define some parameters
-
-    // we are going to need a vector of x_i's
-    // which depend on S_max, K, and N
-    // we'll hardcode those here
-
-    // k, confusingly named, is the dimensions to be projected upon
-    int k = 50;
     float K = 25;
     float S_max = 4*K;
-    float N = atoi(argv[1]);
-    float M = 200;
     float epsilon = .0001;
     float r = .06;
-    string filename = "outputs/bench" + itoa(M) + '_' + itoa(N) + ".txt";
-
-    clock_t start, end;
-    start = clock();
 
     // l is the time step
     float l = 1./(M - 1);
@@ -284,31 +204,31 @@ int main(int argc, char *argv[]) {
 
         // now we need f(t) at x_0 and x_N
         fmat f(N, 1, fill::zeros);
+        
         // see 2.14
         f(N - 1) = (S_max - K*exp(-t*r))*c(N-1);
-
 
         // alrighty, lets do dis
         U.row(i + 1) = (krylov(k, l, A, U.row(i).st(), 1) + l*krylov(k, l, A, f, 0)).st();
     }
 
-#ifdef DOPRINT
-    ofstream out;
-    out.open(filename.c_str(), ofstream::out);
-    for (int i = 0; i < M; i++) {
-        float t = i*l;
-        for (int j = 0; j < N; j++) {
-            float x = j*h;
-            out << t << ' ' << x << ' ' << U(i, j) << '\n';   
-        }
-    }
-    out.close();
-#endif 
+    return U.row(M - 1).st();
 
-    end = clock();
-    cout << "time: " << (double)(end - start)/CLOCKS_PER_SEC << '\n';
+}
+
+int main(int argc, char **argv) {
+
+    // find reference vector 
+    fvec ref = run_solver(N - 1);
+    float refNorm = norm(ref);
+
+    int k_vals[NUM_K_VALS] = { N/32, N/16, N/8, N/4, N/2 };
+    for (int i = 0; i < NUM_K_VALS; i++) {
+        fvec result = run_solver(k_vals[i]);
+        float rel_err = norm(ref - result)/refNorm; 
+        cout << k_vals[i] << " " << rel_err << '\n';
+    }
 
     return 0;
-
 }
 
