@@ -2,8 +2,9 @@
 #include <cmath>
 
 #define N 200
-#define M 200
+#define M_MAX 200
 #define NUM_K_VALS 5
+#define NUM_M_VALS 5
 
 #define MAX(a,b) ({ typeof (a) _a = (a); \
                    typeof (b) _b = (b); \
@@ -141,7 +142,7 @@ fmat krylov(int m, float l, const fmat &A, const fmat &v, int expo) {
     return w;
 }
 
-fvec run_solver(int k) {
+fvec run_solver(int k, int M) {
     // so let's define some parameters
     float K = 25;
     float S_max = 4*K;
@@ -218,16 +219,27 @@ fvec run_solver(int k) {
 
 int main(int argc, char **argv) {
 
-    // find reference vector 
-    fvec ref = run_solver(N - 1);
+    // this is the code for finding error as a function of k
+    fvec ref = run_solver(N - 1, M_MAX);
     float refNorm = norm(ref);
 
+    /*
     int k_vals[NUM_K_VALS] = { N/32, N/16, N/8, N/4, N/2 };
     for (int i = 0; i < NUM_K_VALS; i++) {
-        fvec result = run_solver(k_vals[i]);
+        fvec result = run_solver(k_vals[i], M_MAX);
         float rel_err = norm(ref - result)/refNorm; 
         cout << k_vals[i] << " " << rel_err << '\n';
+    }*/
+
+    int M_vals[NUM_M_VALS] = { M_MAX/32, M_MAX/16, M_MAX/8, M_MAX/4, M_MAX/2 };
+    for (int i = 0; i < NUM_M_VALS; i++) {
+        fvec result = run_solver(50, M_vals[i]);
+        float rel_err = norm(ref - result)/refNorm; 
+        cout << M_vals[i] << " " << rel_err << '\n';
     }
+    
+    
+    
 
     return 0;
 }
